@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.14'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.patc'
+version = '0.0.1-SNAPSHOT'
+description = 'Inventario de bicicletas, repuestos y accesorios con codigos QR'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Libreria tecnica recomendada por el profesor para generar y leer codigos QR.
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation 'com.google.zxing:javase:3.5.4'
+
+    // Base de datos local persistente para la demostracion academica.
+    runtimeOnly 'com.h2database:h2'
+
+    // Driver opcional para cuando quieran conectar el proyecto a MySQL.
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Permite que Spring reconozca nombres de parametros en controladores REST.
+// Tambien se dejaron nombres explicitos en @PathVariable y @RequestParam.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += '-parameters'
+}

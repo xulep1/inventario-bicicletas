@@ -1,0 +1,14 @@
+.gradle/
+build/
+bin/
+data/
+app/
+*.class
+*.log
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+.vscode/
+.idea/
+.DS_Store
+*.bundle

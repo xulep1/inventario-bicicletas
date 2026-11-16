@@ -1,0 +1,9 @@
+Historial local incluido en el bundle
+
+e5bc81a474c2320bf773f849ac170cd022eec1ae
+Adaptar inventario a bicicletas y corregir generacion y lectura QR
+
+ec5241cf2b777f3fe55f17b7c64ad3f96f5d29c2
+Base del inventario general recibida para adaptar
+
+No se ha configurado un repositorio remoto.

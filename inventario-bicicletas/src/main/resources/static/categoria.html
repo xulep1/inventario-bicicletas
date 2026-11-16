@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Productos de la tienda de bicicletas</title><link rel="stylesheet" href="/app.css"></head>
+<body>
+<header><h1 id="titulo">Productos de la tienda</h1><p>Usa un SKU distinto para cada combinación de referencia, talla o rin que necesites contar por separado.</p><nav class="top-actions"><a href="/">Volver a categorías</a><a class="secondary" href="/leer-qr.html">Leer QR</a></nav></header>
+<main>
+    <label for="buscar">Buscar por nombre, SKU, marca o modelo</label><input id="buscar" type="search" placeholder="Ejemplo: rin 29, cadena, BIC-MTB">
+    <div id="productos" class="grid"></div>
+    <section class="card">
+        <h2>Registrar producto en esta categoría</h2>
+        <form id="formProducto">
+        <div class="row">
+            <div><label for="sku">SKU o código interno</label><input id="sku" placeholder="Ejemplo: BIC-MTB-29-M" maxlength="40" required></div>
+            <div><label for="nombre">Nombre</label><input id="nombre" placeholder="Ejemplo: Bicicleta de montaña" maxlength="120" required></div>
+            <div><label for="marca">Marca</label><input id="marca" maxlength="60" placeholder="Marca del fabricante"></div>
+            <div><label for="modelo">Modelo o referencia</label><input id="modelo" maxlength="80" placeholder="Ejemplo: MTB 21 velocidades"></div>
+            <div><label for="talla">Talla</label><input id="talla" maxlength="30" placeholder="Ejemplo: M o 17 pulgadas"></div>
+            <div><label for="rin">Rin</label><input id="rin" maxlength="30" placeholder="Ejemplo: 20, 26, 27.5 o 29"></div>
+            <div><label for="unidadMedida">Unidad de medida</label><input id="unidadMedida" value="unidad" maxlength="30" required></div>
+            <div><label for="precioUnitario">Precio unitario en COP</label><input id="precioUnitario" type="number" min="0" step="0.01" value="0" required></div>
+            <div><label for="stockActual">Existencia inicial</label><input id="stockActual" type="number" min="0" step="1" value="0" required></div>
+            <div><label for="stockMinimo">Stock mínimo</label><input id="stockMinimo" type="number" min="0" step="1" value="0" required></div>
+            <div><label for="clasificacionAbc">Clasificación ABC</label><select id="clasificacionAbc"><option>A</option><option>B</option><option selected>C</option></select></div>
+        </div>
+        <label for="descripcion">Descripción y compatibilidad</label><textarea id="descripcion" maxlength="250" placeholder="Ejemplo: freno de disco, ancho de llanta o velocidades compatibles"></textarea>
+        <p class="hint">Marca, modelo, talla y rin son opcionales para las referencias que no los necesitan. Las cantidades se cuentan en unidades enteras. La clasificación ABC se asigna manualmente.</p>
+        <button type="submit">Guardar producto</button>
+        </form>
+        <p id="mensaje" class="status" role="status"></p>
+    </section>
+</main>
+<script src="/app.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const categoriaId = params.get('id');
+document.getElementById('titulo').textContent = params.get('nombre') || 'Productos de la tienda';
+let productos = [];
+function mostrarProductos() {
+    const filtro = document.getElementById('buscar').value.toLocaleLowerCase('es').trim();
+    const visibles = productos.filter(p => [p.nombre,p.sku,p.marca,p.modelo,p.talla,p.rin].join(' ').toLocaleLowerCase('es').includes(filtro));
+    document.getElementById('productos').innerHTML = visibles.length ? visibles.map(p => `<article class="card"><h2>${esc(p.nombre)}</h2><p><strong>SKU:</strong> ${esc(p.sku)}</p><p class="muted">${esc([p.marca,p.modelo,p.talla && 'Talla '+p.talla,p.rin && 'Rin '+p.rin].filter(Boolean).join(' · '))}</p><p><strong>Existencias:</strong> ${p.stockActual} ${esc(p.unidadMedida)}</p><p><strong>Precio:</strong> ${pesos(p.precioUnitario)}</p><p class="${p.stockBajo ? 'stock-bajo' : 'muted'}">${p.stockBajo ? 'Stock bajo' : 'Stock suficiente'} · Mínimo ${p.stockMinimo}</p><div class="top-actions"><a href="/producto.html?id=${p.id}">Ver ficha y movimientos</a><a class="secondary" href="/api/productos/${p.id}/qr" target="_blank" rel="noopener">Ver QR</a></div></article>`).join('') : '<p class="muted">No hay productos para esta búsqueda.</p>';
+}
+async function cargarProductos() {
+    try {
+        if(!/^[1-9]\d*$/.test(categoriaId || '')) throw new Error('Selecciona una categoría desde la página de inicio.');
+        productos = await api(`/api/productos/categoria/${categoriaId}`); mostrarProductos();
+    } catch(e) { estado('mensaje', e.message, true); }
+}
+document.getElementById('buscar').addEventListener('input', mostrarProductos);
+document.getElementById('formProducto').addEventListener('submit', async event => {
+    event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true;
+    const body = {categoriaId:Number(categoriaId)};
+    for(const campo of ['sku','nombre','descripcion','unidadMedida','clasificacionAbc','marca','modelo','talla','rin']) body[campo] = document.getElementById(campo).value;
+    for(const campo of ['precioUnitario','stockActual','stockMinimo']) body[campo] = Number(document.getElementById(campo).value);
+    try { await api('/api/productos', jsonPost(body)); event.target.reset(); estado('mensaje','Producto creado. Abre su ficha para consultar o descargar el QR.'); await cargarProductos(); }
+    catch(e) { estado('mensaje',e.message,true); }
+    finally { button.disabled = false; }
+});
+cargarProductos();
+</script>
+</body></html>

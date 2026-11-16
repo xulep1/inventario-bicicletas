@@ -1,0 +1,37 @@
+:root { font-family: Arial, sans-serif; color: #172033; background: #f3f6f8; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+header { background: #172f36; color: white; padding: 26px max(24px, calc((100vw - 1160px) / 2)); }
+header p { color: #e2ecee; line-height: 1.5; max-width: 800px; }
+main { max-width: 1208px; margin: auto; padding: 28px 24px 44px; }
+h1 { font-size: 28px; margin: 0 0 10px; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px; }
+.card { min-width: 0; background: white; border: 1px solid #e0e7e9; border-radius: 12px; padding: 22px; margin-bottom: 18px; }
+.card h2 { margin-top: 0; }
+a, button { background: #167364; color: white; text-decoration: none; border: 0; border-radius: 7px; padding: 11px 15px; display: inline-block; cursor: pointer; font: inherit; }
+a:hover, button:hover { background: #11594e; }
+button:disabled { opacity: .6; cursor: wait; }
+button.secondary, a.secondary { background: #e7eff0; color: #172f36; }
+.muted, .hint { color: #53656b; line-height: 1.5; }
+.hint { font-size: 14px; }
+.stock-bajo, .error { color: #b3261e; font-weight: bold; }
+.success { color: #146043; }
+.top-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+label { display: block; font-weight: bold; font-size: 14px; }
+input, textarea, select { width: 100%; padding: 11px; margin: 6px 0 15px; border: 1px solid #b8c8ce; border-radius: 7px; font: inherit; background: white; color: #172033; }
+textarea { min-height: 78px; resize: vertical; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 0 16px; }
+.two-columns { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 11px 9px; border-bottom: 1px solid #e0e7e9; text-align: left; overflow-wrap: anywhere; }
+.table-scroll { overflow-x: auto; }
+.table-scroll table { min-width: 560px; }
+.qr { width: 280px; max-width: 100%; height: auto; image-rendering: pixelated; background: white; }
+.link-text { background: transparent; color: #0b6558; padding: 0; text-decoration: underline; overflow-wrap: anywhere; }
+.badge { font-size: 13px; border-radius: 18px; background: #e7f3ef; color: #146043; padding: 5px 10px; display: inline-block; }
+.demo { font-size: 13px; margin-bottom: 0; color: #d3e5e4; }
+.status { min-height: 20px; }
+@media (max-width: 780px) { .two-columns { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 24px; } main { padding: 20px 16px; } header { padding: 24px 20px; } }

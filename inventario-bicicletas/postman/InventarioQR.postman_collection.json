@@ -1,0 +1,151 @@
+{
+  "info": {
+    "name": "Inventario de bicicletas con QR",
+    "description": "Pruebas de la API del inventario de bicicletas, repuestos y accesorios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Listar productos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/productos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "productos"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Crear producto",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sku\": \"BIC-URB-26-M\",\n  \"nombre\": \"Bicicleta urbana rin 26\",\n  \"descripcion\": \"Referencia de demostracion para Postman\",\n  \"unidadMedida\": \"unidad\",\n  \"precioUnitario\": 780000,\n  \"stockActual\": 3,\n  \"stockMinimo\": 1,\n  \"clasificacionAbc\": \"A\",\n  \"categoriaId\": 1,\n  \"marca\": \"Marca demo\",\n  \"modelo\": \"Urbana\",\n  \"talla\": \"M\",\n  \"rin\": \"26\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/productos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "productos"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Generar QR producto 1",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/productos/1/qr",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "productos",
+            "1",
+            "qr"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Registrar entrada producto 1",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"ENTRADA\",\n  \"cantidad\": 20,\n  \"observacion\": \"Compra a proveedor local\",\n  \"usuarioId\": null\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/productos/1/movimientos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "productos",
+            "1",
+            "movimientos"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Resumen inventario",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/reportes/inventario",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "reportes",
+            "inventario"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Leer imagen QR",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": "http://localhost:8080/api/productos/leer-qr"
+      }
+    },
+    {
+      "name": "Conexion desde celular",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/conexion"
+      }
+    }
+  ]
+}

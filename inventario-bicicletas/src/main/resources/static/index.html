@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Inventario de bicicletas</title><link rel="stylesheet" href="/app.css"></head>
+<body>
+<header>
+    <h1>Inventario de la tienda de bicicletas</h1>
+    <p>Consulta bicicletas, repuestos y accesorios. Registra sus entradas y salidas y abre cada referencia con su código QR.</p>
+    <nav class="top-actions"><a href="/leer-qr.html">Leer un código QR</a><a class="secondary" href="/api/reportes/inventario" target="_blank" rel="noopener">Resumen del inventario</a></nav>
+    <p class="demo">Prototipo académico · Los productos y precios iniciales son ejemplos.</p>
+</header>
+<main>
+    <section class="card" aria-labelledby="conexionTitulo">
+        <h2 id="conexionTitulo">Abrir desde el celular</h2>
+        <p class="muted">Conecta el computador y el celular a la misma red Wi-Fi. Mantén el programa abierto en el computador.</p>
+        <p id="conexion" role="status">Buscando el enlace de acceso...</p>
+        <p class="hint">Los QR nuevos usan este enlace. Si cambias de red, vuelve a generar las etiquetas.</p>
+    </section>
+    <h2>Categorías de la tienda</h2>
+    <div id="categorias" class="grid"></div>
+    <section class="card">
+        <h2>Crear categoría</h2>
+        <form id="formCategoria">
+            <label for="categoriaNombre">Nombre</label><input id="categoriaNombre" placeholder="Ejemplo: Herramientas para bicicletas" maxlength="80" required>
+            <label for="categoriaDescripcion">Descripción</label><textarea id="categoriaDescripcion" maxlength="200" placeholder="Productos que se organizan en esta categoría"></textarea>
+            <button type="submit">Guardar categoría</button>
+        </form>
+        <p id="mensajeCategoria" class="status" role="status"></p>
+    </section>
+</main>
+<script src="/app.js"></script>
+<script>
+async function cargarCategorias() {
+    try {
+        const categorias = await api('/api/categorias');
+        document.getElementById('categorias').innerHTML = categorias.map(c => `<article class="card"><h2>${esc(c.nombre)}</h2><p class="muted">${esc(c.descripcion || 'Sin descripción')}</p><a href="/categoria.html?id=${c.id}&nombre=${encodeURIComponent(c.nombre)}">Ver productos</a></article>`).join('');
+    } catch(e) { estado('mensajeCategoria', e.message, true); }
+}
+async function cargarConexion() {
+    try {
+        const datos = await api('/api/conexion');
+        const p = document.getElementById('conexion');
+        if(datos.soloLocal) { p.textContent = 'No se detectó una red local. Conecta el computador a Wi-Fi y vuelve a cargar esta página.'; p.className = 'error'; return; }
+        p.innerHTML = `<a class="link-text" href="${esc(datos.url)}">${esc(datos.url)}</a>`;
+    } catch(e) { document.getElementById('conexion').textContent = e.message; }
+}
+document.getElementById('formCategoria').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = event.target.querySelector('button'); button.disabled = true;
+    try {
+        await api('/api/categorias', jsonPost({nombre:document.getElementById('categoriaNombre').value,descripcion:document.getElementById('categoriaDescripcion').value}));
+        event.target.reset(); estado('mensajeCategoria', 'Categoría creada.'); await cargarCategorias();
+    } catch(e) { estado('mensajeCategoria', e.message, true); }
+    finally { button.disabled = false; }
+});
+cargarCategorias(); cargarConexion();
+</script>
+</body></html>

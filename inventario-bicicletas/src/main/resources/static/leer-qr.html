@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Leer QR del inventario de bicicletas</title><link rel="stylesheet" href="/app.css"></head>
+<body>
+<header><h1>Leer un código QR</h1><p>Identifica una bicicleta, un repuesto o un accesorio y consulta su ficha.</p><a href="/">Volver a categorías</a></header>
+<main>
+    <section class="card">
+        <h2>Seleccionar una imagen</h2>
+        <p class="muted">Sube el QR descargado o una foto nítida de la etiqueta completa, incluido el borde blanco. En el celular también puedes escanear el QR con la cámara habitual y abrir el enlace.</p>
+        <form id="formQr"><label for="archivo">Imagen del QR en PNG o JPG</label><input id="archivo" type="file" accept="image/png,image/jpeg" required><button type="submit">Identificar producto</button></form>
+        <p id="mensaje" class="status" role="status"></p><div id="resultado"></div>
+    </section>
+    <section class="card">
+        <h2>Lector USB o texto del código</h2>
+        <form id="formTexto"><label for="codigo">Pega el enlace o lee la etiqueta con un lector USB</label><input id="codigo" placeholder="Enlace del producto o código PATC-INVENTARIO" required><button type="submit">Buscar producto</button></form>
+        <p id="mensajeTexto" class="status" role="status"></p>
+    </section>
+</main>
+<script src="/app.js"></script>
+<script>
+function mostrarResultado(p) {
+    document.getElementById('resultado').innerHTML = `<h3>${esc(p.nombre)}</h3><p>SKU: ${esc(p.sku)} · Existencias: ${p.stockActual} ${esc(p.unidadMedida)}</p><a href="/producto.html?id=${p.id}">Abrir ficha del producto</a><p class="hint">La lectura no modifica las existencias.</p>`;
+}
+document.getElementById('formQr').addEventListener('submit', async event => {
+    event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true;
+    document.getElementById('resultado').replaceChildren();
+    try {
+        const file = document.getElementById('archivo').files[0];
+        if(!file) throw new Error('Selecciona una imagen.');
+        if(file.size > 5 * 1024 * 1024) throw new Error('La imagen debe pesar como máximo 5 MB.');
+        const body = new FormData(); body.append('archivo',file);
+        mostrarResultado(await api('/api/productos/leer-qr',{method:'POST',body})); estado('mensaje','Producto identificado.');
+    } catch(e) { estado('mensaje',e.message,true); }
+    finally { button.disabled = false; }
+});
+document.getElementById('formTexto').addEventListener('submit', async event => {
+    event.preventDefault(); document.getElementById('resultado').replaceChildren();
+    try { mostrarResultado(await api('/api/productos/buscar-qr?codigo='+encodeURIComponent(document.getElementById('codigo').value.trim()))); estado('mensajeTexto','Producto identificado.'); }
+    catch(e) { estado('mensajeTexto',e.message,true); }
+});
+</script>
+</body></html>

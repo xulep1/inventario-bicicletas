@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ficha del producto de ciclismo</title><link rel="stylesheet" href="/app.css"></head>
+<body>
+<header><h1>Ficha del producto</h1><p>Escanear el QR abre esta ficha. Las existencias cambian al guardar un movimiento.</p><nav class="top-actions"><a href="/">Volver a categorías</a><a id="volverCategoria" class="secondary" href="/">Ver productos</a><a class="secondary" href="/leer-qr.html">Leer otro QR</a></nav></header>
+<main class="two-columns">
+    <section class="card">
+        <h2 id="nombreProducto">Cargando producto...</h2>
+        <div id="detalle"></div>
+        <h3>Código QR del producto</h3>
+        <img id="qr" class="qr" alt="Código QR que abre la ficha del producto" hidden>
+        <p><a id="descargarQr" class="secondary" hidden>Descargar QR</a></p>
+        <p id="enlaceQr" class="hint"></p>
+        <p class="hint">Al escanear desde un celular, ambos equipos deben estar en la misma red y el programa debe seguir abierto.</p>
+    </section>
+    <section class="card">
+        <h2>Registrar movimiento</h2>
+        <form id="formMovimiento">
+            <label for="tipo">Tipo</label><select id="tipo"><option value="ENTRADA">Entrada por compra o reposición</option><option value="SALIDA">Salida por venta o uso en taller</option><option value="DEVOLUCION">Devolución que regresa al inventario</option><option value="MERMA">Merma por daño o pérdida</option><option value="AJUSTE">Ajuste al saldo del conteo físico</option></select>
+            <label for="cantidad" id="etiquetaCantidad">Cantidad</label><input id="cantidad" type="number" min="1" step="1" value="1" required>
+            <label for="observacion">Observación</label><textarea id="observacion" maxlength="255" placeholder="Ejemplo: compra a proveedor, venta o repuesto utilizado en reparación"></textarea>
+            <button id="guardar" type="submit" disabled>Guardar movimiento</button>
+        </form>
+        <p id="mensaje" class="status" role="status"></p>
+        <h2>Historial de movimientos</h2>
+        <div class="table-scroll"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Observación</th></tr></thead><tbody id="movimientos"></tbody></table></div>
+    </section>
+</main>
+<script src="/app.js"></script>
+<script>
+const id = new URLSearchParams(location.search).get('id');
+let productoActual;
+async function cargarProducto() {
+    if(!/^[1-9]\d*$/.test(id || '')) throw new Error('El enlace no contiene un producto válido. Selecciónalo desde una categoría.');
+    const p = await api(`/api/productos/${id}`); productoActual = p;
+    document.getElementById('nombreProducto').textContent = p.nombre;
+    document.getElementById('detalle').innerHTML = `<p><strong>SKU:</strong> ${esc(p.sku)}</p><p><strong>Categoría:</strong> ${esc(p.categoriaNombre || 'Sin categoría')}</p><p><strong>Marca:</strong> ${esc(p.marca || 'No aplica')}</p><p><strong>Modelo o referencia:</strong> ${esc(p.modelo || 'No aplica')}</p><p><strong>Talla:</strong> ${esc(p.talla || 'No aplica')} · <strong>Rin:</strong> ${esc(p.rin || 'No aplica')}</p><p>${esc(p.descripcion)}</p><p><strong>Existencias:</strong> <span id="stockValor">${p.stockActual}</span> ${esc(p.unidadMedida)} · <strong>Mínimo:</strong> ${p.stockMinimo}</p><p><strong>Precio:</strong> ${pesos(p.precioUnitario)}</p><p class="${p.stockBajo ? 'stock-bajo' : 'muted'}">${p.stockBajo ? 'Alerta: stock bajo' : 'Stock suficiente'}</p>`;
+    const qr = document.getElementById('qr'); qr.src = `/api/productos/${id}/qr?cache=${Date.now()}`; qr.hidden = false;
+    const a = document.getElementById('descargarQr'); a.href = `/api/productos/${id}/qr`; a.download = `QR-${p.sku.replace(/[^a-zA-Z0-9_-]/g,'_')}.png`; a.hidden = false;
+    const volver = document.getElementById('volverCategoria'); volver.href = p.categoriaId ? `/categoria.html?id=${p.categoriaId}&nombre=${encodeURIComponent(p.categoriaNombre)}` : '/';
+    document.getElementById('guardar').disabled = false;
+}
+async function cargarMovimientos() {
+    const movimientos = await api(`/api/productos/${id}/movimientos`);
+    document.getElementById('movimientos').innerHTML = movimientos.length ? movimientos.map(m => `<tr><td>${esc(new Date(m.fecha).toLocaleString('es-CO'))}</td><td>${esc(m.tipo)}</td><td>${m.cantidad}</td><td>${esc(m.observacion)}</td></tr>`).join('') : '<tr><td colspan="4">Aún no hay movimientos registrados.</td></tr>';
+}
+document.getElementById('tipo').addEventListener('change', () => {
+    const ajuste = document.getElementById('tipo').value === 'AJUSTE';
+    document.getElementById('cantidad').min = ajuste ? '0' : '1';
+    document.getElementById('etiquetaCantidad').textContent = ajuste ? 'Saldo final según el conteo físico' : 'Cantidad';
+});
+document.getElementById('formMovimiento').addEventListener('submit', async event => {
+    event.preventDefault(); const button = document.getElementById('guardar'); button.disabled = true;
+    const tipo = document.getElementById('tipo').value; const cantidad = Number(document.getElementById('cantidad').value);
+    try {
+        if(['SALIDA','MERMA'].includes(tipo) && cantidad > productoActual.stockActual) throw new Error('La cantidad supera las existencias disponibles.');
+        await api(`/api/productos/${id}/movimientos`, jsonPost({tipo,cantidad,observacion:document.getElementById('observacion').value,usuarioId:null}));
+        estado('mensaje','Movimiento registrado correctamente.'); await cargarProducto(); await cargarMovimientos();
+    } catch(e) { estado('mensaje',e.message,true); }
+    finally { button.disabled = !productoActual; }
+});
+async function iniciar() {
+    try { await cargarProducto(); await cargarMovimientos();
+        const c = await api('/api/conexion');
+        document.getElementById('enlaceQr').textContent = `El QR abre: ${c.url}/producto.html?id=${id}`;
+    } catch(e) { document.getElementById('nombreProducto').textContent = 'No fue posible abrir la ficha'; estado('mensaje',e.message,true); }
+}
+iniciar();
+</script>
+</body></html>
