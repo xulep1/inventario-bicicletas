@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo INVENTARIO DE LA TIENDA DE BICICLETAS
+echo INVENTARIO DE LA TIENDA DE BICICLETAS.
 echo.
 echo Esta version inicia desde el codigo fuente con Gradle.
 echo Requisito: JDK 17 instalado y configurado.
