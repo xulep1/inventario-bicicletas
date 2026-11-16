@@ -1,11 +1,15 @@
 # Arquitectura del inventario de bicicletas
 
-El proyecto esta organizado siguiendo una estructura MVC ampliada con capa de servicios y repositorios:
+## 1. Visión general
+
+El proyecto sigue una estructura **MVC ampliada** con capas de servicios y repositorios. Se ejecuta como aplicación web Java con Spring Boot y expone una API REST.
+
+## 2. Estructura de paquetes
 
 ```text
 src/main/java/com/patc/inventarioqr
 ├── controller   -> Expone la API REST con @RestController
-├── service      -> Contiene la logica de negocio
+├── service      -> Contiene la lógica de negocio
 ├── model        -> Entidades JPA que representan tablas
 ├── repository   -> Interfaces JpaRepository para persistencia
 ├── dto          -> Objetos de entrada y salida de la API
@@ -13,18 +17,36 @@ src/main/java/com/patc/inventarioqr
 └── util         -> Funciones auxiliares, como el contenido del QR
 ```
 
-## Relacion con Programacion III
+## 3. Tecnologías y relación con Programación III
 
-- Spring Boot: permite ejecutar el sistema como aplicacion Java web.
-- API REST: permite crear endpoints HTTP para productos, categorias, movimientos y reportes.
-- JPA: permite guardar y consultar entidades en una base de datos relacional sin escribir SQL para cada operacion.
-- MVC: separa responsabilidades para que el codigo sea mas ordenado y facil de explicar.
-- ZXing: permite generar y leer codigos QR desde Java.
+| Tecnología | Aporte al proyecto |
+|---|---|
+| **Spring Boot** | Ejecuta el sistema como aplicación Java web. |
+| **API REST** | Crea endpoints HTTP para productos, categorías, movimientos y reportes. |
+| **JPA** | Guarda y consulta entidades en una base de datos relacional sin escribir SQL para cada operación. |
+| **MVC** | Separa responsabilidades para que el código sea más ordenado y fácil de explicar. |
+| **ZXing** | Genera y lee códigos QR desde Java. |
 
-## Adaptación a la tienda de bicicletas
+## 4. Adaptación a la tienda de bicicletas
 
-Las vistas estáticas organizan Bicicletas, Repuestos y Accesorios. Los productos incluyen marca, modelo, talla y rin opcionales. Cada referencia o variante que se cuenta por separado conserva un SKU único.
+- Las vistas estáticas organizan **Bicicletas, Repuestos y Accesorios**.
+- Los productos incluyen **marca, modelo, talla y rin** como campos opcionales.
+- Cada referencia o variante que se cuenta por separado conserva un **SKU único**.
 
-`ConexionService` calcula el origen del enlace de ficha y permite una dirección configurada con `APP_BASE_URL`. `ProductoController` genera el PNG con ese enlace; `QrService` codifica y decodifica las imágenes con ZXing. La pantalla `leer-qr.html` envía la imagen o el texto para identificar el producto.
+## 5. Funcionamiento del QR
 
-La configuración predeterminada usa H2 en archivo dentro de `data`. El almacenamiento con MySQL y la autenticación no están validados en esta entrega. Los movimientos se guardan con la actualización del saldo dentro de una transacción; se impide eliminar un producto con historial.
+1. `ConexionService` calcula el origen del enlace de la ficha y permite configurar una dirección propia con `APP_BASE_URL`.
+2. `ProductoController` genera el PNG del QR con ese enlace.
+3. `QrService` codifica y decodifica las imágenes con ZXing.
+4. La pantalla `leer-qr.html` envía la imagen o el texto para identificar el producto.
+
+## 6. Persistencia e integridad de datos
+
+- **Base de datos predeterminada:** H2 en archivo, dentro de la carpeta `data`.
+- **Movimientos:** se guardan junto con la actualización del saldo dentro de una **transacción**.
+- **Integridad:** no se puede eliminar un producto que tenga historial.
+
+## 7. Alcance y limitaciones de esta entrega
+
+- El almacenamiento con **MySQL** no está validado.
+- La **autenticación** no está validada.
