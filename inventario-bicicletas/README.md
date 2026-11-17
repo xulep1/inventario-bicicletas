@@ -30,15 +30,23 @@ Conecta el celular y el computador a la misma red Wi-Fi y mantén el servidor ab
 - `src`: código de la aplicación y pruebas.
 - `gradle`, `gradlew` y `gradlew.bat`: Gradle Wrapper para compilar e iniciar.
 - `build.gradle` y `settings.gradle`: configuración del proyecto.
+- `INICIAR_WINDOWS.bat` e `iniciar.sh`: scripts de inicio rápido para Windows y Linux/macOS.
 - `README_USO_RAPIDO.md`: instrucciones completas y solución de problemas.
 - `docs`: arquitectura, requisitos y resultados de las verificaciones anteriores.
 - `postman`: ejemplos de peticiones a la API.
 - `historial-inventario-bicicletas.bundle`: respaldo opcional de las dos versiones Git anteriores; se conserva como referencia histórica. Para ejecutar esta entrega utiliza los archivos del repositorio actual.
 
-Para trabajar en Linux o macOS, con JDK 17: `sh iniciar.sh`.
+Para trabajar en Linux o macOS, con JDK 17:
+
+```bash
+sh iniciar.sh
+```
 
 ## Subir esta carpeta a GitHub
 
-Después de extraer el ZIP, abre `inventario-bicicletas`. En GitHub, usa **Add file → Upload files** y arrastra su contenido conservando las carpetas `src`, `gradle`, `docs` y `postman`. Incluye también todos los archivos de la raíz, especialmente `gradlew.bat`, `build.gradle`, `settings.gradle` y este `README.md`. Guarda los cambios con **Commit changes** o el botón equivalente que muestre tu repositorio.
+1. Después de extraer el ZIP, abre la carpeta `inventario-bicicletas`.
+2. En GitHub, usa **Add file → Upload files** y arrastra su contenido conservando las carpetas `src`, `gradle`, `docs` y `postman`.
+3. Incluye también los archivos de la raíz (`gradlew`, `gradlew.bat`, `build.gradle`, `settings.gradle`, `INICIAR_WINDOWS.bat`, `iniciar.sh` y este `README.md`), evitando subir `build`, `.gradle` o `data` si ya ejecutaste el proyecto localmente.
+4. Guarda los cambios con **Commit changes**.
 
 Esta versión permite revisar el código directamente en GitHub. Las dependencias se descargan al compilar y los archivos `build`, `.gradle` y `data` se generan localmente.
