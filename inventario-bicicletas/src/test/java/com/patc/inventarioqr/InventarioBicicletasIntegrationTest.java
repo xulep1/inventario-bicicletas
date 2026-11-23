@@ -101,6 +101,33 @@ class InventarioBicicletasIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
+    @Test void editarCategoriaConservaSusProductosYRechazaNombresRepetidos() throws Exception {
+        mvc.perform(put("/api/categorias/1").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"repuestos\"}")).andExpect(status().isConflict());
+        mvc.perform(put("/api/categorias/1").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Bicicletas urbanas\",\"descripcion\":\"Rodadas en ciudad\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("id").value(1));
+        mvc.perform(get("/api/categorias/1")).andExpect(status().isOk())
+                .andExpect(jsonPath("descripcion").value("Rodadas en ciudad"));
+        assertThat(producto(1).get("categoriaNombre").asText()).isEqualTo("Bicicletas urbanas");
+    }
+
+    @Test void editarFichaConservaElSaldoYEliminarRetiraElProducto() throws Exception {
+        String alta = """
+            {"sku":"CRUD-29","nombre":"Bicicleta de prueba","unidadMedida":"unidad",
+             "precioUnitario":100000,"stockActual":4,"categoriaId":1}
+            """;
+        long id = json.readTree(mvc.perform(post("/api/productos").contentType(MediaType.APPLICATION_JSON).content(alta))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).get("id").asLong();
+        mvc.perform(put("/api/productos/" + id).contentType(MediaType.APPLICATION_JSON).content("""
+            {"sku":"CRUD-29","nombre":"Bicicleta urbana","unidadMedida":"unidad",
+             "precioUnitario":120000,"categoriaId":1}
+            """)).andExpect(status().isOk()).andExpect(jsonPath("stockActual").value(4));
+        assertThat(producto(id).get("precioUnitario").asInt()).isEqualTo(120000);
+        mvc.perform(delete("/api/productos/" + id)).andExpect(status().isOk());
+        mvc.perform(get("/api/productos/" + id)).andExpect(status().isNotFound());
+    }
+
     @Test void movimientosActualizanSaldoYRechazanUnaSalidaExcesiva() throws Exception {
         int inicial = producto(3).get("stockActual").asInt();
         mvc.perform(post("/api/productos/3/movimientos").contentType(MediaType.APPLICATION_JSON)

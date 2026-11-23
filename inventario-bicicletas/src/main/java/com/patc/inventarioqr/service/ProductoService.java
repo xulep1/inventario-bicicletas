@@ -125,7 +125,7 @@ public class ProductoService {
     @Transactional
     public ProductoResponse actualizar(Long id, ProductoRequest request) {
         validarProducto(request);
-        Producto producto = obtenerProducto(id);
+        Producto producto = obtenerProductoParaModificar(id);
         String sku = Objects.requireNonNull(normalizar(request.sku()), "El SKU es obligatorio");
 
         if (!producto.getSku().equalsIgnoreCase(sku) && productoRepository.existsBySkuIgnoreCase(sku)) {
@@ -139,7 +139,7 @@ public class ProductoService {
 
     @Transactional
     public void eliminar(Long id) {
-        Producto producto = Objects.requireNonNull(obtenerProducto(id), "Producto no puede ser null");
+        Producto producto = obtenerProductoParaModificar(id);
         if (movimientoRepository.existsByProductoId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "No se puede eliminar un producto que tiene movimientos de inventario");
@@ -149,7 +149,7 @@ public class ProductoService {
 
     @Transactional
     public MovimientoResponse registrarMovimiento(Long productoId, MovimientoRequest request) {
-        Producto producto = obtenerProducto(productoId);
+        Producto producto = obtenerProductoParaModificar(productoId);
         validarMovimiento(request);
 
         TipoMovimiento tipo = Objects.requireNonNull(request.tipo(), "El tipo de movimiento es obligatorio");
@@ -197,6 +197,11 @@ public class ProductoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
     }
 
+    private Producto obtenerProductoParaModificar(Long id) {
+        return productoRepository.buscarParaModificar(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+    }
+
     private void aplicarDatosProducto(Producto producto, ProductoRequest request, String sku) {
         Categoria categoria = null;
         Long categoriaId = request.categoriaId();
@@ -218,7 +223,9 @@ public class ProductoService {
         producto.setRin(normalizar(request.rin()));
         producto.setUnidadMedida(normalizar(request.unidadMedida()));
         producto.setPrecioUnitario(precioUnitario == null ? BigDecimal.ZERO : precioUnitario);
-        producto.setStockActual(stockActual == null ? 0 : stockActual.intValue());
+        if (stockActual != null) {
+            producto.setStockActual(stockActual);
+        }
         producto.setStockMinimo(stockMinimo == null ? 0 : stockMinimo.intValue());
         producto.setClasificacionAbc(normalizarClasificacion(request.clasificacionAbc()));
         producto.setCategoria(categoria);

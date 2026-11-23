@@ -29,16 +29,10 @@ public class DataSeeder {
                 usuarioRepository.save(new Usuario("Operador de demostracion", "demo@bicicletas.local", "ADMIN"));
             }
 
-            if (categoriaRepository.count() == 0) {
-                categoriaRepository.save(new Categoria("Bicicletas", "Bicicletas de montana, urbanas e infantiles por referencia y talla"));
-                categoriaRepository.save(new Categoria("Repuestos", "Llantas, neumaticos, cadenas, frenos y transmision"));
-                categoriaRepository.save(new Categoria("Accesorios", "Cascos, luces, guantes, candados y complementos"));
-            }
-
-            if (productoRepository.count() == 0) {
-                Categoria bicicletas = categoriaRepository.findByNombreIgnoreCase("Bicicletas").orElse(null);
-                Categoria repuestos = categoriaRepository.findByNombreIgnoreCase("Repuestos").orElse(null);
-                Categoria accesorios = categoriaRepository.findByNombreIgnoreCase("Accesorios").orElse(null);
+            if (categoriaRepository.count() == 0 && productoRepository.count() == 0) {
+                Categoria bicicletas = categoriaRepository.save(new Categoria("Bicicletas", "Bicicletas de montana, urbanas e infantiles por referencia y talla"));
+                Categoria repuestos = categoriaRepository.save(new Categoria("Repuestos", "Llantas, neumaticos, cadenas, frenos y transmision"));
+                Categoria accesorios = categoriaRepository.save(new Categoria("Accesorios", "Cascos, luces, guantes, candados y complementos"));
                 crearProductoDemo(productoRepository, bicicletas, "BIC-MTB-29-M", "Bicicleta de montana rin 29", "Cuadro de aluminio. Ejemplo academico; no corresponde al inventario real.", "unidad", new BigDecimal("950000"), 4, 2, "A", "Marca demo", "MTB 21V", "M", "29");
                 crearProductoDemo(productoRepository, bicicletas, "BIC-INF-20", "Bicicleta infantil rin 20", "Bicicleta infantil. Datos de demostracion.", "unidad", new BigDecimal("420000"), 2, 1, "B", "Marca demo", "Infantil", "Infantil", "20");
                 crearProductoDemo(productoRepository, repuestos, "REP-LLA-29-210", "Llanta 29 x 2.10", "Verificar ancho y compatibilidad antes de entregar.", "unidad", new BigDecimal("68000"), 12, 4, "B", "Marca demo", "MTB 2.10", null, "29");
