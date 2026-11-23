@@ -17,4 +17,7 @@ async function api(url, options = {}) {
     }
     return response.json();
 }
-function jsonPost(body) { return {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}; }
+function jsonRequest(method, body) {
+    return {method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)};
+}
+function jsonPost(body) { return jsonRequest('POST', body); }

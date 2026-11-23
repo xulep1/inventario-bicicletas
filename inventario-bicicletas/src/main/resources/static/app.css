@@ -15,6 +15,9 @@ a, button { background: #167364; color: white; text-decoration: none; border: 0;
 a:hover, button:hover { background: #11594e; }
 button:disabled { opacity: .6; cursor: wait; }
 button.secondary, a.secondary { background: #e7eff0; color: #172f36; }
+button.peligro { background: #fbeceb; color: #94251e; }
+button.peligro:hover { background: #f4d6d2; }
+.acciones-lista { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 18px; }
 .muted, .hint { color: #53656b; line-height: 1.5; }
 .hint { font-size: 14px; }
 .stock-bajo, .error { color: #b3261e; font-weight: bold; }

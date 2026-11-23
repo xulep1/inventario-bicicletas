@@ -5,9 +5,13 @@
 <header><h1 id="titulo">Productos de la tienda</h1><p>Usa un SKU distinto para cada combinación de referencia, talla o rin que necesites contar por separado.</p><nav class="top-actions"><a href="/">Volver a categorías</a><a class="secondary" href="/leer-qr.html">Leer QR</a></nav></header>
 <main>
     <label for="buscar">Buscar por nombre, SKU, marca o modelo</label><input id="buscar" type="search" placeholder="Ejemplo: rin 29, cadena, BIC-MTB">
+    <div class="acciones-lista">
+        <button id="agregarProducto" type="button" disabled>Agregar producto</button>
+        <span id="mensajeLista" role="status"></span>
+    </div>
     <div id="productos" class="grid"></div>
     <section class="card">
-        <h2>Registrar producto en esta categoría</h2>
+        <h2 id="tituloFormulario">Registrar producto en esta categoría</h2>
         <form id="formProducto">
         <div class="row">
             <div><label for="sku">SKU o código interno</label><input id="sku" placeholder="Ejemplo: BIC-MTB-29-M" maxlength="40" required></div>
@@ -18,44 +22,160 @@
             <div><label for="rin">Rin</label><input id="rin" maxlength="30" placeholder="Ejemplo: 20, 26, 27.5 o 29"></div>
             <div><label for="unidadMedida">Unidad de medida</label><input id="unidadMedida" value="unidad" maxlength="30" required></div>
             <div><label for="precioUnitario">Precio unitario en COP</label><input id="precioUnitario" type="number" min="0" step="0.01" value="0" required></div>
-            <div><label for="stockActual">Existencia inicial</label><input id="stockActual" type="number" min="0" step="1" value="0" required></div>
+            <div id="existenciaInicial"><label for="stockActual">Existencia inicial</label><input id="stockActual" type="number" min="0" step="1" value="0" required></div>
             <div><label for="stockMinimo">Stock mínimo</label><input id="stockMinimo" type="number" min="0" step="1" value="0" required></div>
             <div><label for="clasificacionAbc">Clasificación ABC</label><select id="clasificacionAbc"><option>A</option><option>B</option><option selected>C</option></select></div>
         </div>
         <label for="descripcion">Descripción y compatibilidad</label><textarea id="descripcion" maxlength="250" placeholder="Ejemplo: freno de disco, ancho de llanta o velocidades compatibles"></textarea>
         <p class="hint">Marca, modelo, talla y rin son opcionales para las referencias que no los necesitan. Las cantidades se cuentan en unidades enteras. La clasificación ABC se asigna manualmente.</p>
-        <button type="submit">Guardar producto</button>
+        <p id="ayudaStock" class="hint" hidden>Para cambiar las existencias, registra un movimiento desde la ficha del producto.</p>
+        <div class="top-actions">
+            <button id="guardarProducto" type="submit" disabled>Guardar producto</button>
+            <button id="cancelarProducto" type="button" class="secondary" hidden>Cancelar edición</button>
+        </div>
         </form>
         <p id="mensaje" class="status" role="status"></p>
     </section>
 </main>
 <script src="/app.js"></script>
 <script>
-const params = new URLSearchParams(location.search);
-const categoriaId = params.get('id');
-document.getElementById('titulo').textContent = params.get('nombre') || 'Productos de la tienda';
+const categoriaId = new URLSearchParams(location.search).get('id');
+const lista = document.getElementById('productos');
+const buscar = document.getElementById('buscar');
+const form = document.getElementById('formProducto');
+const guardar = document.getElementById('guardarProducto');
+const cancelar = document.getElementById('cancelarProducto');
+const agregar = document.getElementById('agregarProducto');
+const camposTexto = ['sku', 'nombre', 'descripcion', 'unidadMedida', 'clasificacionAbc', 'marca', 'modelo', 'talla', 'rin'];
 let productos = [];
-function mostrarProductos() {
-    const filtro = document.getElementById('buscar').value.toLocaleLowerCase('es').trim();
-    const visibles = productos.filter(p => [p.nombre,p.sku,p.marca,p.modelo,p.talla,p.rin].join(' ').toLocaleLowerCase('es').includes(filtro));
-    document.getElementById('productos').innerHTML = visibles.length ? visibles.map(p => `<article class="card"><h2>${esc(p.nombre)}</h2><p><strong>SKU:</strong> ${esc(p.sku)}</p><p class="muted">${esc([p.marca,p.modelo,p.talla && 'Talla '+p.talla,p.rin && 'Rin '+p.rin].filter(Boolean).join(' · '))}</p><p><strong>Existencias:</strong> ${p.stockActual} ${esc(p.unidadMedida)}</p><p><strong>Precio:</strong> ${pesos(p.precioUnitario)}</p><p class="${p.stockBajo ? 'stock-bajo' : 'muted'}">${p.stockBajo ? 'Stock bajo' : 'Stock suficiente'} · Mínimo ${p.stockMinimo}</p><div class="top-actions"><a href="/producto.html?id=${p.id}">Ver ficha y movimientos</a><a class="secondary" href="/api/productos/${p.id}/qr" target="_blank" rel="noopener">Ver QR</a></div></article>`).join('') : '<p class="muted">No hay productos para esta búsqueda.</p>';
+let productoEnEdicion = null;
+let ocupado = false;
+
+function tarjetaProducto(p) {
+    const detalle = [p.marca, p.modelo, p.talla && 'Talla ' + p.talla, p.rin && 'Rin ' + p.rin];
+    return `<article class="card">
+        <h2>${esc(p.nombre)}</h2>
+        <p><strong>SKU:</strong> ${esc(p.sku)}</p>
+        <p class="muted">${esc(detalle.filter(Boolean).join(' · '))}</p>
+        <p><strong>Existencias:</strong> ${p.stockActual} ${esc(p.unidadMedida)}</p>
+        <p><strong>Precio:</strong> ${pesos(p.precioUnitario)}</p>
+        <p class="${p.stockBajo ? 'stock-bajo' : 'muted'}">${p.stockBajo ? 'Stock bajo' : 'Stock suficiente'} · Mínimo ${p.stockMinimo}</p>
+        <div class="top-actions">
+            <a href="/producto.html?id=${p.id}">Ver ficha y movimientos</a>
+            <a class="secondary" href="/api/productos/${p.id}/qr" target="_blank" rel="noopener">Ver QR</a>
+            <button type="button" class="secondary" data-editar="${p.id}">Editar producto</button>
+            <button type="button" class="peligro" data-eliminar="${p.id}">Eliminar producto</button>
+        </div>
+    </article>`;
 }
+
+function mostrarProductos() {
+    const filtro = buscar.value.toLocaleLowerCase('es').trim();
+    const visibles = productos.filter(p => [p.nombre, p.sku, p.marca, p.modelo, p.talla, p.rin]
+        .join(' ').toLocaleLowerCase('es').includes(filtro));
+    lista.innerHTML = visibles.length ? visibles.map(tarjetaProducto).join('')
+        : `<p class="muted">${filtro ? 'No hay productos para esta búsqueda.' : 'Aún no hay productos en esta categoría.'}</p>`;
+}
+
+function prepararFormulario(producto) {
+    productoEnEdicion = producto;
+    form.reset();
+    document.getElementById('tituloFormulario').textContent = producto ? 'Editar producto' : 'Registrar producto en esta categoría';
+    guardar.textContent = producto ? 'Actualizar producto' : 'Guardar producto';
+    cancelar.hidden = !producto;
+    document.getElementById('existenciaInicial').hidden = Boolean(producto);
+    form.elements.stockActual.disabled = Boolean(producto);
+    document.getElementById('ayudaStock').hidden = !producto;
+    if (producto) {
+        for (const campo of [...camposTexto, 'precioUnitario', 'stockMinimo']) {
+            form.elements[campo].value = producto[campo] ?? '';
+        }
+    }
+    estado('mensaje', '');
+}
+
+function bloquearAcciones(bloquear) {
+    ocupado = bloquear;
+    guardar.disabled = cancelar.disabled = agregar.disabled = bloquear;
+    lista.inert = bloquear;
+    form.inert = bloquear;
+}
+
+agregar.addEventListener('click', () => {
+    if (productoEnEdicion) prepararFormulario(null);
+    estado('mensajeLista', '');
+    form.elements.sku.focus();
+});
+
+cancelar.addEventListener('click', () => {
+    const boton = lista.querySelector(`[data-editar="${productoEnEdicion.id}"]`);
+    prepararFormulario(null);
+    (boton || agregar).focus();
+});
+
+lista.addEventListener('click', async event => {
+    const boton = event.target.closest('button');
+    if (!boton || ocupado) return;
+    const id = Number(boton.dataset.editar || boton.dataset.eliminar);
+    const producto = productos.find(p => p.id === id);
+    estado('mensajeLista', '');
+    if (boton.hasAttribute('data-editar')) {
+        prepararFormulario(producto);
+        form.elements.nombre.focus();
+        return;
+    }
+    if (!window.confirm(`¿Eliminar «${producto.nombre}» (SKU ${producto.sku}) del inventario?`)) return;
+    bloquearAcciones(true);
+    try {
+        await api(`/api/productos/${id}`, {method: 'DELETE'});
+        productos = productos.filter(p => p.id !== id);
+        if (productoEnEdicion?.id === id) prepararFormulario(null);
+        mostrarProductos();
+        estado('mensajeLista', `Producto eliminado: ${producto.nombre}.`);
+    } catch (e) { estado('mensajeLista', e.message, true); }
+    finally {
+        bloquearAcciones(false);
+        document.getElementById('mensajeLista').scrollIntoView({block: 'nearest'});
+    }
+});
+
+buscar.addEventListener('input', mostrarProductos);
+form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (guardar.disabled || ocupado) return;
+    const edicion = productoEnEdicion;
+    const datos = {categoriaId: Number(categoriaId)};
+    for (const campo of camposTexto) datos[campo] = form.elements[campo].value;
+    datos.precioUnitario = Number(form.elements.precioUnitario.value);
+    datos.stockMinimo = Number(form.elements.stockMinimo.value);
+    if (!edicion) datos.stockActual = Number(form.elements.stockActual.value);
+    bloquearAcciones(true);
+    try {
+        const url = edicion ? `/api/productos/${edicion.id}` : '/api/productos';
+        const producto = await api(url, jsonRequest(edicion ? 'PUT' : 'POST', datos));
+        if (edicion) productos = productos.map(p => p.id === producto.id ? producto : p);
+        else productos.push(producto);
+        buscar.value = '';
+        mostrarProductos();
+        prepararFormulario(null);
+        estado('mensajeLista', '');
+        estado('mensaje', edicion ? 'Producto actualizado.' : 'Producto creado. Abre su ficha para consultar el QR.');
+    } catch (e) { estado('mensaje', e.message, true); }
+    finally { bloquearAcciones(false); }
+});
+
 async function cargarProductos() {
     try {
-        if(!/^[1-9]\d*$/.test(categoriaId || '')) throw new Error('Selecciona una categoría desde la página de inicio.');
-        productos = await api(`/api/productos/categoria/${categoriaId}`); mostrarProductos();
-    } catch(e) { estado('mensaje', e.message, true); }
+        if (!/^[1-9]\d*$/.test(categoriaId || '')) throw new Error('Selecciona una categoría desde la página de inicio.');
+        const [categoria, referencias] = await Promise.all([
+            api(`/api/categorias/${categoriaId}`), api(`/api/productos/categoria/${categoriaId}`)
+        ]);
+        document.getElementById('titulo').textContent = categoria.nombre;
+        productos = referencias;
+        mostrarProductos();
+        guardar.disabled = agregar.disabled = false;
+    } catch (e) { estado('mensajeLista', e.message, true); }
 }
-document.getElementById('buscar').addEventListener('input', mostrarProductos);
-document.getElementById('formProducto').addEventListener('submit', async event => {
-    event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true;
-    const body = {categoriaId:Number(categoriaId)};
-    for(const campo of ['sku','nombre','descripcion','unidadMedida','clasificacionAbc','marca','modelo','talla','rin']) body[campo] = document.getElementById(campo).value;
-    for(const campo of ['precioUnitario','stockActual','stockMinimo']) body[campo] = Number(document.getElementById(campo).value);
-    try { await api('/api/productos', jsonPost(body)); event.target.reset(); estado('mensaje','Producto creado. Abre su ficha para consultar o descargar el QR.'); await cargarProductos(); }
-    catch(e) { estado('mensaje',e.message,true); }
-    finally { button.disabled = false; }
-});
 cargarProductos();
 </script>
 </body></html>
